@@ -42,6 +42,15 @@ input,select{width:100%;font-size:16px;padding:10px;border:1px solid var(--line)
 .tick.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--okSoft);color:var(--ok)}
 .ci h3{margin-bottom:2px}.ci .sec{margin-top:10px}.ci .sec b{display:block;font-size:14px}.ci .sec span{font-size:14px;color:var(--mut)}
+.big{font-size:34px;font-weight:700;letter-spacing:-.5px}
+.bar{height:10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);overflow:hidden;margin:8px 0 10px}
+.bar i{display:block;height:100%;background:var(--acc)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.meal .mac{font-size:13px;color:var(--acc);font-weight:600;margin-top:2px}
+.meal ul{margin:6px 0 0;padding-left:18px;font-size:14px;color:var(--mut)}
+.meal .add{margin-top:10px;width:100%}
+.sh b{display:block;margin-top:10px;font-size:14px}
+.sh div{font-size:14px;color:var(--mut)}
 .pill.mut{background:var(--bg);color:var(--mut)}
 .btn{border:0;background:var(--ink);color:var(--bg);padding:12px 14px;border-radius:10px;font-size:15px;font-family:inherit}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
@@ -55,7 +64,7 @@ tr.cur td{font-weight:700;color:var(--acc)}
 .day:last-child{border-bottom:0}
 .small{font-size:13px;color:var(--mut)}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:0;padding:12px 0 14px;color:var(--mut);font-size:13px;font-family:inherit}
+nav button{flex:1;background:none;border:0;padding:12px 0 14px;color:var(--mut);font-size:12px;font-family:inherit;min-width:0}
 nav button.on{color:var(--acc);font-weight:600}
 svg text{fill:var(--mut);font-size:10px}
 </style>
@@ -67,6 +76,7 @@ svg text{fill:var(--mut);font-size:10px}
   <button data-tab="today">Today</button>
   <button data-tab="week">Week</button>
   <button data-tab="runs">Runs</button>
+  <button data-tab="food">Nutrition</button>
   <button data-tab="progress">Progress</button>
   <button data-tab="more">More</button>
 </nav>
@@ -124,6 +134,46 @@ function runKm(w,type){w=Math.max(1,w);const long=w<=LONG.length?LONG[w-1]:10;if
 function phase(w){return w<1?"Starts soon":w<=13?"Phase 1: building to 10 km":"Phase 2: holding 10–12 km"}
 function weekDates(ref){const m=mondayOf(parse(ref));return [...Array(7)].map((_,i)=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)})}
 
+const MEALS=[
+ {c:"Breakfast",n:"Skyr berry bowl",k:305,p:33,i:["250 g plain skyr","30 g oats","100 g frozen berries","Cinnamon"],m:"Mix and eat. Thaw the berries overnight in the fridge for a sauce."},
+ {c:"Breakfast",n:"Big omelette on toast",k:345,p:36,i:["2 eggs + 150 g liquid egg whites","Handful of spinach and tomato","1 slice wholemeal bread"],m:"Whisk, cook in a non-stick pan with a spray of oil, fold over the veg."},
+ {c:"Breakfast",n:"Protein overnight oats",k:370,p:35,i:["40 g oats","1 scoop whey (30 g)","150 ml skimmed milk","Half a banana"],m:"Mix the night before and leave in the fridge."},
+ {c:"Lunch or dinner",n:"Tuna rice bowl",k:450,p:45,i:["2 cans tuna in water, drained","150 g cooked rice","150 g frozen veg","1 tsp olive oil, soy sauce or lemon"],m:"Microwave the veg, add rice and tuna on top."},
+ {c:"Lunch or dinner",n:"Chicken and potato tray bake",k:495,p:48,i:["180 g chicken breast","250 g potatoes","Peppers and onion","1 tsp olive oil, paprika, garlic"],m:"Everything on one tray, 200°C for about 35 min. Makes good leftovers."},
+ {c:"Lunch or dinner",n:"Hake with lentils",k:365,p:47,i:["200 g frozen hake","150 g canned lentils, drained","Big salad","1 tsp olive oil, lemon"],m:"Bake or steam the hake from frozen, about 20 min. Warm the lentils with garlic."},
+ {c:"Lunch or dinner",n:"Lean beef chili",k:490,p:45,i:["150 g 5% fat beef mince","100 g canned kidney beans","200 g chopped tomatoes","Onion, pepper, cumin, paprika","100 g cooked rice"],m:"Brown the mince, add the rest, simmer 20 min. Freezes well."},
+ {c:"Lunch or dinner",n:"Chicken wrap",k:395,p:46,i:["150 g chicken breast","1 wholemeal wrap","50 g skyr with garlic and herbs as sauce","Lettuce, tomato, cucumber"],m:"Grill the chicken in strips, wrap with the salad and skyr sauce."},
+ {c:"Lunch or dinner",n:"Tofu stir-fry",k:520,p:33,i:["200 g firm tofu","200 g frozen stir-fry veg","125 g cooked rice","Soy sauce, ginger, 1 tsp oil"],m:"Press and cube the tofu, fry until golden, add veg and sauce."},
+ {c:"Snack",n:"Cottage cheese plate",k:180,p:25,i:["200 g light cottage cheese","Cucumber and cherry tomatoes","Black pepper"],m:""},
+ {c:"Snack",n:"Protein shake",k:205,p:32,i:["1 scoop whey (30 g)","250 ml skimmed milk"],m:""},
+ {c:"Snack",n:"Eggs and turkey",k:230,p:27,i:["2 boiled eggs","60 g turkey breast slices"],m:"Boil a batch of eggs on Sunday for the week."},
+ {c:"Snack",n:"Skyr cup",k:90,p:17,i:["150 g plain skyr","Cinnamon"],m:""}
+];
+const SHOP=[
+ ["Protein",["Chicken breast (peito de frango)","Frozen hake (pescada congelada)","Tuna in water (atum ao natural)","Eggs and liquid egg whites (claras de ovo)","Plain skyr or quark (queijo fresco batido magro)","Light cottage cheese","5% fat beef mince","Turkey breast slices (peito de peru)","Firm tofu","Whey protein"]],
+ ["Carbs",["Oats","Rice","Potatoes","Wholemeal bread or wraps","Canned lentils, chickpeas, kidney beans"]],
+ ["Fruit and veg",["Frozen mixed veg and stir-fry veg","Frozen berries","Bananas","Spinach, tomatoes, cucumber, peppers, onions","Canned chopped tomatoes"]],
+ ["Flavour",["Olive oil (measure it, 1 tsp = 45 kcal)","Soy sauce","Paprika, cumin, garlic, cinnamon","Lemons"]]
+];
+const PTARGET=130,KTARGET=1750;
+function proteinToday(){return (db.protein&&db.protein[TODAY])||[]}
+function addProtein(g,label){db.protein=db.protein||{};(db.protein[TODAY]=db.protein[TODAY]||[]).push({g:+g,l:label||""});
+ for(const d of Object.keys(db.protein))if(d<iso(new Date(Date.now()-60*864e5)))delete db.protein[d];save()}
+function vFood(){
+ const L=proteinToday(),tot=L.reduce((a,x)=>a+x.g,0),pct=Math.min(100,Math.round(tot/PTARGET*100));
+ let h=`<div class="card"><div class="row"><div><div class="small">Protein today</div><div class="big">${tot} <span class="small">/ ${PTARGET} g</span></div></div><div class="small" style="text-align:right">Calories<br><b style="color:var(--ink)">about ${KTARGET.toLocaleString("en")}</b></div></div>
+ <div class="bar"><i style="width:${pct}%"></i></div>
+ <div class="small">${tot>=PTARGET?"Target hit for today.":`${PTARGET-tot} g to go.`}</div>
+ <div class="qa">${[10,20,30,40].map(g=>`<button class="btn ghost" data-padd="${g}">+${g} g</button>`).join("")}</div>
+ <div class="set two" style="grid-template-columns:1fr 90px"><input inputmode="numeric" placeholder="Other amount (g)" data-pcustom><button class="btn" data-paddc>Add</button></div>
+ ${L.length?`<div style="margin-top:10px">${L.map((x,i)=>`<div class="day"><span>${x.l?esc(x.l):"Added"}</span><span><b>${x.g} g</b> <button class="chip" data-pdel="${i}" aria-label="Remove">✕</button></span></div>`).join("")}</div>`:""}</div>`;
+ const cats=["Breakfast","Lunch or dinner","Snack"];
+ h+=`<div class="card"><h3>Example day</h3><div class="small" style="margin-top:4px">Skyr berry bowl, tuna rice bowl, cottage cheese plate, chicken tray bake: about 1,430 kcal and 151 g protein. That leaves about 300 kcal for fruit, milk in coffee and extras.</div></div>`;
+ for(const c of cats){h+=`<h2 style="margin:16px 2px 8px">${c}</h2>`;
+  h+=MEALS.map((m,i)=>m.c!==c?"":`<div class="card meal"><h3>${m.n}</h3><div class="mac">${m.k} kcal · ${m.p} g protein</div><ul>${m.i.map(x=>`<li>${x}</li>`).join("")}</ul>${m.m?`<div class="small" style="margin-top:6px">${m.m}</div>`:""}<button class="btn ghost add" data-meal="${i}">Ate this: add ${m.p} g protein</button></div>`).join("")}
+ h+=`<h2 style="margin:16px 2px 8px">Shopping list</h2><div class="card sh">${SHOP.map(([t,xs])=>`<b>${t}</b>${xs.map(x=>`<div>${x}</div>`).join("")}`).join("")}</div>`;
+ h+=`<div class="small" style="margin:6px 4px 14px">Calories and protein are approximate, based on typical label values. Check your brands, especially for oils and sauces.</div>`;
+ return h}
 let tab="today",sel=TODAY,progEx=null,resetArm=false,checkin=null;
 const esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 function loadCheckin(){fetch("checkin.json?t="+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.date&&Array.isArray(j.sections)){checkin=j;try{localStorage.setItem("training_checkin",JSON.stringify(j))}catch(e){}if(tab==="today")render()}}).catch(()=>{})}
@@ -158,7 +208,7 @@ function dayDone(date){
 
 function header(){
  const w=weekNo(TODAY);
- $hdr.innerHTML=`<h1>${{today:"Training",week:"This week",runs:"Running",progress:"Progress",more:"More"}[tab]}</h1><div class="sub">${DN[parse(TODAY).getDay()]} ${fmt(TODAY)} · Week ${Math.max(w,1)} · ${phase(w)}</div>`;
+ $hdr.innerHTML=`<h1>${{today:"Training",week:"This week",runs:"Running",food:"Nutrition",progress:"Progress",more:"More"}[tab]}</h1><div class="sub">${DN[parse(TODAY).getDay()]} ${fmt(TODAY)} · Week ${Math.max(w,1)} · ${phase(w)}</div>`;
  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab))}
 
 function setRow(id,t,k,s,sg,db_){
@@ -221,11 +271,16 @@ function vMore(){
  <div class="card stack"><h3>Backup</h3><div class="small">Your logs are saved only on this phone. Export a backup now and then.</div><button class="btn" data-export>Export backup</button><label class="btn ghost" style="display:block;text-align:center">Import backup<input type="file" accept="application/json" data-import hidden></label></div>
  <div class="card stack"><button class="btn warn" data-reset>${resetArm?"Tap again to erase everything":"Erase all data"}</button></div>`}
 
-function render(){header();$app.innerHTML={today:vToday,week:vWeek,runs:vRuns,progress:vProgress,more:vMore}[tab]();}
+function render(){header();$app.innerHTML={today:vToday,week:vWeek,runs:vRuns,food:vFood,progress:vProgress,more:vMore}[tab]();}
 
 document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tab=b.dataset.tab;if(tab==="today")sel=sel||TODAY;resetArm=false;render();window.scrollTo(0,0)});
 $app.addEventListener("click",e=>{
- const t=e.target.closest("[data-sel],[data-tick],[data-runtick],[data-go],[data-export],[data-reset]");if(!t)return;
+ const t=e.target.closest("[data-sel],[data-tick],[data-runtick],[data-go],[data-export],[data-reset],[data-padd],[data-paddc],[data-pdel],[data-meal]");if(!t)return;
+ const keep=()=>{const y=window.scrollY;render();window.scrollTo(0,y)};
+ if(t.dataset.padd){addProtein(t.dataset.padd,"");keep();return}
+ if(t.dataset.paddc!==undefined){const v=parseInt(($app.querySelector("[data-pcustom]")||{}).value,10);if(v>0&&v<300){addProtein(v,"");keep()}return}
+ if(t.dataset.pdel!==undefined){const L=proteinToday();L.splice(+t.dataset.pdel,1);save();keep();return}
+ if(t.dataset.meal!==undefined){const m=MEALS[+t.dataset.meal];addProtein(m.p,m.n);t.textContent="Added";setTimeout(keep,600);return}
  if(t.dataset.sel){sel=t.dataset.sel;render();return}
  if(t.dataset.go){sel=t.dataset.go;tab="today";render();window.scrollTo(0,0);return}
  if(t.dataset.tick){const id=t.dataset.tick,k=+t.dataset.k;const L=((db.logs[sel]=db.logs[sel]||{})[id]=db.logs[sel][id]||[]);const s=L[k]=L[k]||{};s.d=!s.d;

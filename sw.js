@@ -1,5 +1,5 @@
 // Network first, cache fallback, so the app opens offline in the gym.
-const C="training-v1";
+const C="training-v2";
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(["./","index.html","manifest.json","icon-192.png"])))});
 self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));
 self.addEventListener("fetch",e=>{
